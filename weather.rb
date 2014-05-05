@@ -7,16 +7,18 @@ class Weather
   end
 
   def forecast
-    response = Faraday.get "http://api.openweathermap.org/data/2.5/weather?q=#{@city}"
-    weather_data = JSON.parse(response.body)
-    weather_data["weather"].first["description"]
+    get_weather("weather?q=#{@city}")["weather"].first["description"]
   end
 
   def seven_day
-    response = Faraday.get "http://api.openweathermap.org/data/2.5/forecast/daily?q=#{@city}&mode=json&cnt=7"
-    weather_data = JSON.parse(response.body)
-    weather_data["list"].each_with_object([]) do |day, weeks_forecast|
+    get_weather("forecast/daily?q=#{@city}&mode=json&cnt=7")["list"].each_with_object([]) do |day, weeks_forecast|
       weeks_forecast << day["weather"].first["description"]
     end
+  end
+
+  private
+  def get_weather(url = "")
+    response = Faraday.get "http://api.openweathermap.org/data/2.5/" << url
+    JSON.parse(response.body)
   end
 end

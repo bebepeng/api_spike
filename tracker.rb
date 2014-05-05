@@ -7,22 +7,23 @@ class Tracker
   end
 
   def projects
-    response = Faraday.get "https://www.pivotaltracker.com/services/v5/projects", {}, 'X-TrackerToken' => @api_token
-    tracker_data = JSON.parse(response.body)
-    tracker_data.map { |project| {'id' => project['id'], 'name' => project['name']} }
+    get_tracker.map { |project| {'id' => project['id'], 'name' => project['name']} }
   end
 
   def stories(project_name)
     id = projects.select { |project| project['name'] == project_name }.first['id']
-    response = Faraday.get "https://www.pivotaltracker.com/services/v5/projects/#{id}/stories?date_format=millis&with_state=unstarted", {}, 'X-TrackerToken' => @api_token
-    tracker_data = JSON.parse(response.body)
-    tracker_data.map { |story| {'id' => story['id'], 'name' => story['name']} }
+    get_tracker("/#{id}/stories?date_format=millis&with_state=unstarted").map { |story| {'id' => story['id'], 'name' => story['name']} }
   end
 
   def details(project_name, story_name)
     project_id = projects.select { |project| project['name'] == project_name }.first['id']
     story_id = stories(project_name).select { |story| story['name'] == story_name }.first['id']
-    response = Faraday.get "https://www.pivotaltracker.com/services/v5/projects/#{project_id}/stories/#{story_id}", {}, 'X-TrackerToken' => @api_token
-    tracker_data = JSON.parse(response.body)['description']
+    get_tracker("/#{project_id}/stories/#{story_id}")['description']
+  end
+
+  private
+  def get_tracker(url = "")
+    response = Faraday.get "https://www.pivotaltracker.com/services/v5/projects"<<url, {}, 'X-TrackerToken' => @api_token
+    JSON.parse(response.body)
   end
 end
